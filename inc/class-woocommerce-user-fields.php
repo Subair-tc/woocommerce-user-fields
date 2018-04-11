@@ -1,7 +1,23 @@
 <?php
 
 class WoocommerceUserFields {
-    function __constructor(){
+    public static function init() {
+        
+        add_action( 'woocommerce_register_form', __CLASS__ . '::print_user_frontend_fields', 10 );
+        add_action( 'woocommerce_edit_account_form', __CLASS__ . '::print_user_frontend_fields', 10 );
+        add_filter( 'woocommerce_checkout_fields', __CLASS__ . '::add_checkout_fields', 10, 1 );
+
+        add_action( 'show_user_profile', __CLASS__ . '::print_user_admin_fields', 30 ); // admin: edit profile
+        add_action( 'edit_user_profile', __CLASS__ . '::print_user_admin_fields', 30 ); // admin: edit other users
+
+        add_action( 'woocommerce_created_customer', __CLASS__ . '::save_account_fields' ); // register/checkout
+        add_action( 'woocommerce_save_account_details', __CLASS__ . '::save_account_fields' ); // edit WC account
+        add_action( 'personal_options_update', __CLASS__ . '::save_account_fields' ); // edit own account admin
+        add_action( 'edit_user_profile_update', __CLASS__ . '::save_account_fields' );//edit others profile
+
+        add_filter( 'woocommerce_registration_errors',  __CLASS__ . '::validate_user_frontend_fields', 10 );
+        add_filter( 'woocommerce_save_account_details_errors',  __CLASS__ . '::validate_user_frontend_fields', 10 );
+
 
     }
 
@@ -18,14 +34,17 @@ class WoocommerceUserFields {
         ) );
     }
 
+    private function get_edit_user_id() {
+        return isset( $_GET['user_id'] ) ? (int) $_GET['user_id'] : get_current_user_id();
+    }
 
     public function print_user_frontend_fields() {
-        $fields = $this->get_account_fields();
+        $fields = self::get_account_fields();
     
         foreach ( $fields as $key => $field_args ) {
             
             if ( is_user_logged_in() ) {
-                $user_id = get_current_user_id();
+                $user_id = self::get_edit_user_id();
                 $value   = get_user_meta( $user_id, $key, true );
             }
     
@@ -36,7 +55,7 @@ class WoocommerceUserFields {
 
 
     public function add_checkout_fields() {
-         $fields =  $this->get_account_fields();
+         $fields =  self::get_account_fields();
  
         foreach ( $fields as $key => $field_args ) {
             $checkout_fields['account'][ $key ] = $field_args;
@@ -45,8 +64,36 @@ class WoocommerceUserFields {
         return $checkout_fields;
     }
 
+
+    function print_user_admin_fields() {
+        $fields =  self::get_account_fields();
+        ?>
+        <h2><?php _e( 'Additional Information', 'woo-addon' ); ?></h2>
+        <table class="form-table" id="woo-addon-additional-information">
+            <tbody>
+            <?php foreach ( $fields as $key => $field_args ) { ?>
+                <?php
+                $user_id = self::get_edit_user_id();;
+                $value   = get_user_meta( $user_id, $key, true );
+                ?>
+                <tr>
+                    <th>
+                        <label for="<?php echo $key; ?>"><?php echo $field_args['label']; ?></label>
+                    </th>
+                    <td>
+                        <?php $field_args['label'] = false; ?>
+                        <?php woocommerce_form_field( $key, $field_args, $value ); ?>
+                    </td>
+                </tr>
+            <?php } ?>
+            </tbody>
+        </table>
+        <?php
+    }
+
+
     public function save_account_fields( $customer_id ) {
-        $fields =  $this->get_account_fields();
+        $fields =  self::get_account_fields();
         foreach ( $fields as $key => $field_args ) {
             $sanitize = isset( $field_args['sanitize'] ) ? $field_args['sanitize'] : 'wc_clean';
             $value    = isset( $_POST[ $key ] ) ? call_user_func( $sanitize, $_POST[ $key ] ) : '';
@@ -56,7 +103,7 @@ class WoocommerceUserFields {
 
 
     public  function validate_user_frontend_fields( $errors ) {
-        $fields = $this->get_account_fields();
+        $fields = self::get_account_fields();
     
         foreach ( $fields as $key => $field_args ) {
             if ( empty( $field_args['required'] ) ) {
@@ -73,4 +120,9 @@ class WoocommerceUserFields {
     }
 
 
+    
+
+
 }
+
+WoocommerceUserFields::init();
