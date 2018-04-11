@@ -18,6 +18,8 @@ class WoocommerceUserFields {
         add_filter( 'woocommerce_registration_errors',  __CLASS__ . '::validate_user_frontend_fields', 10 );
         add_filter( 'woocommerce_save_account_details_errors',  __CLASS__ . '::validate_user_frontend_fields', 10 );
 
+        add_action('admin_menu',  __CLASS__ . '::wc_user_fields_options_page');
+
 
     }
 
@@ -120,7 +122,70 @@ class WoocommerceUserFields {
     }
 
 
-    
+    public static function wc_user_fields_options_page() {
+        if ( function_exists('add_options_page') ) {
+            add_options_page('WC User Fields', 'WC User Fields', 'manage_options', basename(__FILE__), __CLASS__ . '::wc_user_fields_options');
+        }
+    }
+
+    public function wc_user_fields_options(){
+        ?>
+
+            <div class="wc-uf-contaner">
+                <form name="update_user_fields" method="post" action="<?php echo esc_attr($_SERVER["REQUEST_URI"]); ?>">
+
+                    <div class="item-block">
+                        <div vlass="form-group">
+                            <label for="field_label">Field Label</label>
+                            <input type="text" name="field_label" placeholder="Field Label" />
+                        </div>
+
+                        <div vlass="form-group">
+                            <label for="field_name">Field Name</label>
+                            <input type="text" name="field_name" placeholder="Field Name" />
+                        </div>
+
+                        <div vlass="form-group">
+                            <label for="field_type">Field Type</label>
+                            <select  name="field_type">
+                                <option value="text" >
+                                <option value="dropdown" >
+                            </select>
+                        </div>
+
+                         <div vlass="form-group">
+                            <label for="field_value">Field Value</label>
+                            <input type="text" name="field_value" placeholder="Field Value" />
+                            <span> for drop down type addoptions as values with comma seperated</span>
+                         </div>
+
+                         <div vlass="form-group">
+                            <label for="field_is_required">Is Required?</label>
+                            <input type="checkbox" name="field_is_required" />
+                         </div>
+
+                         <div vlass="form-group">
+                            <button name="add-new" id="add-new-block">Add New</button>
+                         </div>
+
+                         <div vlass="form-group">
+                            <input type="submit" value="save fields" name="save_fields"/>
+
+                         </div>
+                        
+
+                    </div>
+
+
+                </form>
+
+            </div>
+
+
+        <?php
+    }
+
+
 
 
 }
