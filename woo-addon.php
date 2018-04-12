@@ -2,7 +2,12 @@
 <?php
 /*
 Plugin Name: woo addon
-
+Plugin URI: https://github.com/Subair-tc/woocommerce-user-fields
+Description: wordpress plugin for woocommerce user account additional fields
+Version: 0.1.0
+Author: SUBAIR
+Author URI: https://github.com/Subair-tc
+Text Domain: woo-addon
 */
 
 define( 'WOO_ADDON_PLUGIN_PATH', plugin_dir_path( __FILE__ ) );
