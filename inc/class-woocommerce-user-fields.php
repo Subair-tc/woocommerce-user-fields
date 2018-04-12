@@ -20,25 +20,60 @@ class WoocommerceUserFields {
 
         add_action('admin_menu',  __CLASS__ . '::wc_user_fields_options_page');
 
+        add_action( 'admin_enqueue_scripts', __CLASS__ . '::add_wc_user_fields_style' );
+
+        
+
 
     }
+    
 
     private function get_account_fields() {
-        return apply_filters( 'account_fields', array(
-            'website' => array(
-                'type'        => 'text',
-                'label'       => __( 'Website', 'woo-addon' ),
-                'placeholder' => __( 'Webste', 'woo-addon' ),
-                'sanitize'    => 'wc_clean',
-                'required'    => true,
-                
-            ),
-        ) );
+        $account_field_options = get_option("account_fields_admin_options");
+        if( !$account_field_options ) {
+             return apply_filters( 'account_fields', array(
+                'website' => array(
+                    'type'        => 'text',
+                    'label'       => __( 'Website', 'woo-addon' ),
+                    'placeholder' => __( 'Webste', 'woo-addon' ),
+                    'sanitize'    => 'wc_clean',
+                    'required'    => true,
+                    
+                ),
+            ) );
+        } else {
+            return $account_field_options;
+        }
+       
     }
 
     private function get_edit_user_id() {
         return isset( $_GET['user_id'] ) ? (int) $_GET['user_id'] : get_current_user_id();
     }
+
+
+    public static function add_wc_user_fields_style() {
+	
+        wp_register_style( 'bootstrap-min-css', WOO_ADDON_PLUGIN_URL.'/css/bootstrap.min.css' );
+        wp_enqueue_style( 'bootstrap-min-css' );
+
+        wp_register_style( 'user-fields-custom-css', WOO_ADDON_PLUGIN_URL.'/css/custom.css' );
+        wp_enqueue_style( 'user-fields-custom-css' );
+        
+        wp_register_script( 'bootstrap-min-js', WOO_ADDON_PLUGIN_URL.'/js/bootstrap.min.js', true );
+        wp_enqueue_script( 'bootstrap-min-js' );
+         wp_register_script( 'user-fields-custom-js', WOO_ADDON_PLUGIN_URL.'/js/custom.js', true );
+        wp_enqueue_script( 'user-fields-custom-js' );
+        
+        wp_localize_script('user-fields-custom-js', 'Ajax', array(
+            'ajaxurl' => admin_url( 'admin-ajax.php' ),
+        ));
+    }
+
+    
+
+    
+    
 
     public function print_user_frontend_fields() {
         $fields = self::get_account_fields();
@@ -131,54 +166,176 @@ class WoocommerceUserFields {
     public function wc_user_fields_options(){
         ?>
 
-            <div class="wc-uf-contaner">
-                <form name="update_user_fields" method="post" action="<?php echo esc_attr($_SERVER["REQUEST_URI"]); ?>">
-
-                    <div class="item-block">
-                        <div vlass="form-group">
-                            <label for="field_label">Field Label</label>
-                            <input type="text" name="field_label" placeholder="Field Label" />
+            <div class="container">
+                <div class="wc-uf-contaner">
+                    <div class="row">
+                        <div class="col-sm-12">
+                            <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#addNewField">
+                                Add New Field
+                            </button>
                         </div>
-
-                        <div vlass="form-group">
-                            <label for="field_name">Field Name</label>
-                            <input type="text" name="field_name" placeholder="Field Name" />
+                    </div>
+                    <div class="row">
+                        <div class="col-sm-12">
+                                <table class="table table-striped table-dark">
+                                    <thead>
+                                        <tr>
+                                            <th scope="col">#</th>
+                                            <th scope="col">Name</th>
+                                            <th scope="col">Type</th> 
+                                            <th scope="col">Label</th>                                                          
+                                            <th scope="col">Required</th>
+                                            <th scope="col">edit</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                <?php
+                                    $accoutn_field_options = self::get_account_fields();
+                                    //var_dump($accoutn_field_options);
+                                    $i = 0;
+                                    foreach ( $accoutn_field_options as $field=>$filed_array ) {
+                                        //var_dump($field);
+                                        //var_dump($filed_array);
+                                        ?>
+                                            <tr>
+                                                <td><?php echo ++$i; ?></td>
+                                                <td><?php echo $field; ?></td>
+                                                <td><?php echo $filed_array['type']; ?></td>
+                                                <td><?php echo $filed_array['label']; ?></td>
+                                                <td><?php echo $filed_array['required']; ?></td>
+                                                <td> <span data-toggle="modal" data-target="#addNewField" data-field= <?php echo $field; ?>  data-label= <?php echo $filed_array['label']; ?> data-type= <?php echo $filed_array['type']; ?> data-required= <?php echo $filed_array['required']; ?> >edit</span></td>
+                                            </tr>
+                                        <?php
+                                    }
+                                ?>
+                                    <tbody>
+                                </table>
                         </div>
-
-                        <div vlass="form-group">
-                            <label for="field_type">Field Type</label>
-                            <select  name="field_type">
-                                <option value="text" >
-                                <option value="dropdown" >
-                            </select>
-                        </div>
-
-                         <div vlass="form-group">
-                            <label for="field_value">Field Value</label>
-                            <input type="text" name="field_value" placeholder="Field Value" />
-                            <span> for drop down type addoptions as values with comma seperated</span>
-                         </div>
-
-                         <div vlass="form-group">
-                            <label for="field_is_required">Is Required?</label>
-                            <input type="checkbox" name="field_is_required" />
-                         </div>
-
-                         <div vlass="form-group">
-                            <button name="add-new" id="add-new-block">Add New</button>
-                         </div>
-
-                         <div vlass="form-group">
-                            <input type="submit" value="save fields" name="save_fields"/>
-
-                         </div>
-                        
-
                     </div>
 
+                    
+                </div>
 
-                </form>
+            </div>
 
+          <div class="modal fade" id="addNewField" tabindex="-1" role="dialog" aria-labelledby="addNewFieldLabel" aria-hidden="true">
+            
+            <form name="update_user_fields" method="post" action="<?php echo esc_attr($_SERVER["REQUEST_URI"]); ?>">
+            <?php
+                if ( function_exists('wp_nonce_field') ) {
+                    wp_nonce_field('update_user_fields-options');
+                }	
+            ?>
+            
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h3 class="modal-title" id="addNewFieldLabel">Add New Field</h3>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <p>please use same field name for overwrite the existing field.</p>
+                        <?php
+                            if( isset($_POST['save_fields'])) {
+                                check_admin_referer('update_user_fields-options');
+                                $field_label        = isset( $_POST['field_label'] ) ? $_POST['field_label'] : '';
+                                $field_name         = isset( $_POST['field_name'] ) ? $_POST['field_name'] : '';
+                                $field_type         = isset( $_POST['field_type'] ) ? $_POST['field_type'] : '';
+                                $field_value        = isset( $_POST['field_value'] ) ? $_POST['field_value'] : '';
+                                $field_is_required  = isset( $_POST['field_is_required'] ) ? true : false;
+
+                                if( $field_label == '' || $field_name =='' || $field_type=='' || ( $field_type == 'dropdown' && $field_value =='' )  ) {
+                                    echo '<div class="danger_block alert alert-danger alert-dismissable">
+                                            <a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a>
+                                        Please fill all required fields.
+                                        </div>';
+                                } else {
+                                    $accoutn_field_options = self::get_account_fields();
+
+                                   
+
+                                    $new_field_details = array(
+                                        'type'        =>  $field_type ,
+                                        'label'       => __( $field_label , 'woo-addon' ),
+                                        'placeholder' => __( $field_label , 'woo-addon' ),
+                                        'sanitize'    => 'wc_clean',
+                                        'required'    => $field_is_required,
+                                    );
+
+                                     if( $field_type == 'select') {
+                                        
+                                        $options_array = array(
+                                            __( 'Select an option...', 'woo-addon'  ),
+                                        );
+
+                                        $options = explode(',',$field_value);
+                                        foreach( $options as $option ) {
+                                            array_push($options_array , $option );
+                                        }
+
+                                        $new_field_details['options'] = $options_array;
+                                    }
+
+                                    $accoutn_field_options[ $field_name ] = $new_field_details;
+
+                                    update_option("account_fields_admin_options", $accoutn_field_options);
+                                    echo '<div class="success_block alert alert-success alert-dismissable">
+                                            <a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a>
+                                            Options updated successfully.
+                                        </div>';
+
+                                   // var_dump( $new_field_details);
+                                }
+
+
+
+                            }
+
+
+                        ?>
+
+                            <div class="item-block">
+                                <div class="form-group">
+                                    <label for="field_label">Field Label <span>*</span></label>
+                                    <input  type="text"  class="form-control" id="field_label" name="field_label" placeholder="Field Label" />
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="field_name">Field Name<span>*</span></label>
+                                    <input type="text"  class="form-control" id="field_name" name="field_name" placeholder="Field Name" />
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="field_type">Field Type<span>*</span></label>
+                                    <select  id="field_type"  name="field_type"  class="form-control" >
+                                        <option value="" > Select field type </option>
+                                        <option value="text" > text </option>
+                                        <option value="select" >dropdown</option>
+                                    </select>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="field_value">Field Value</label>
+                                    <input type="text"  class="form-control" id="field_value"  name="field_value"  placeholder="Field Value" />
+                                    <span> for drop down type add options as values with comma seperated</span>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="field_is_required">Is Required?</label>
+                                    <input type="checkbox"  class="form-control"  name="field_is_required" />
+                                </div>
+                                
+
+                            </div>
+                    </div>
+                    <div class="modal-footer">
+                        <input type="submit"  class="btn btn-primary" value="Save fields" name="save_fields"/>
+                    </div>
+                </div>
+            </div>
+            </form>
             </div>
 
 
