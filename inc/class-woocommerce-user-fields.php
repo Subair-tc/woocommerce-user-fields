@@ -3,9 +3,9 @@
 class WoocommerceUserFields {
     public static function init() {
         
-        add_action( 'woocommerce_register_form', __CLASS__ . '::print_user_frontend_fields', 10 );
-        add_action( 'woocommerce_edit_account_form', __CLASS__ . '::print_user_frontend_fields', 10 );
-        add_filter( 'woocommerce_checkout_fields', __CLASS__ . '::add_checkout_fields', 10, 1 );
+        add_action( 'woocommerce_register_form', __CLASS__ . '::print_user_frontend_fields', 10 ); // my account register
+        add_action( 'woocommerce_edit_account_form', __CLASS__ . '::print_user_frontend_fields', 10 ); // my accoutn edit account
+        add_filter( 'woocommerce_checkout_fields', __CLASS__ . '::add_checkout_fields', 10, 1 ); // registration from checkout
 
         add_action( 'show_user_profile', __CLASS__ . '::print_user_admin_fields', 30 ); // admin: edit profile
         add_action( 'edit_user_profile', __CLASS__ . '::print_user_admin_fields', 30 ); // admin: edit other users
@@ -15,43 +15,30 @@ class WoocommerceUserFields {
         add_action( 'personal_options_update', __CLASS__ . '::save_account_fields' ); // edit own account admin
         add_action( 'edit_user_profile_update', __CLASS__ . '::save_account_fields' );//edit others profile
 
-        add_filter( 'woocommerce_registration_errors',  __CLASS__ . '::validate_user_frontend_fields', 10 );
-        add_filter( 'woocommerce_save_account_details_errors',  __CLASS__ . '::validate_user_frontend_fields', 10 );
+        add_filter( 'woocommerce_registration_errors',  __CLASS__ . '::validate_user_frontend_fields', 10 ); // validation
+        add_filter( 'woocommerce_save_account_details_errors',  __CLASS__ . '::validate_user_frontend_fields', 10 ); // update data
 
-        add_action('admin_menu',  __CLASS__ . '::wc_user_fields_options_page');
+        add_action('admin_menu',  __CLASS__ . '::wc_user_fields_options_page'); // create option page
 
-        add_action( 'admin_enqueue_scripts', __CLASS__ . '::add_wc_user_fields_style' );
-
-        
-
-
+        add_action( 'admin_enqueue_scripts', __CLASS__ . '::add_wc_user_fields_style' ); // enqueing required styles and scripts
     }
     
 
+    // get the extra field added
     private function get_account_fields() {
         $account_field_options = get_option("account_fields_admin_options");
-        if( !$account_field_options ) {
-             return apply_filters( 'account_fields', array(
-                'website' => array(
-                    'type'        => 'text',
-                    'label'       => __( 'Website', 'woo-addon' ),
-                    'placeholder' => __( 'Webste', 'woo-addon' ),
-                    'sanitize'    => 'wc_clean',
-                    'required'    => true,
-                    
-                ),
-            ) );
-        } else {
-            return $account_field_options;
+        if( ! empty( $account_field_options ) ) {
+             return $account_field_options;
         }
-       
+        return false;
     }
 
+    // Get user id for editting profle data.
     private function get_edit_user_id() {
         return isset( $_GET['user_id'] ) ? (int) $_GET['user_id'] : get_current_user_id();
     }
 
-
+    // Add Required styles and scripts
     public static function add_wc_user_fields_style() {
 	
         wp_register_style( 'bootstrap-min-css', WOO_ADDON_PLUGIN_URL.'/css/bootstrap.min.css' );
@@ -70,11 +57,7 @@ class WoocommerceUserFields {
         ));
     }
 
-    
-
-    
-    
-
+    // Print the Fields on different sections.
     public function print_user_frontend_fields() {
         $fields = self::get_account_fields();
     
@@ -90,7 +73,7 @@ class WoocommerceUserFields {
         }
     }
 
-
+    // Added fileds into checkout page.
     public function add_checkout_fields() {
          $fields =  self::get_account_fields();
  
@@ -101,7 +84,7 @@ class WoocommerceUserFields {
         return $checkout_fields;
     }
 
-
+    // Add fields into admin sections.
     function print_user_admin_fields() {
         $fields =  self::get_account_fields();
         ?>
@@ -128,7 +111,7 @@ class WoocommerceUserFields {
         <?php
     }
 
-
+    // Save field values.
     public function save_account_fields( $customer_id ) {
         $fields =  self::get_account_fields();
         foreach ( $fields as $key => $field_args ) {
@@ -138,7 +121,7 @@ class WoocommerceUserFields {
         }
     }
 
-
+    // Validate form values for Required.
     public  function validate_user_frontend_fields( $errors ) {
         $fields = self::get_account_fields();
     
@@ -156,13 +139,14 @@ class WoocommerceUserFields {
         return $errors;
     }
 
-
+    //Add option page for adding new fields.
     public static function wc_user_fields_options_page() {
         if ( function_exists('add_options_page') ) {
             add_options_page('WC User Fields', 'WC User Fields', 'manage_options', basename(__FILE__), __CLASS__ . '::wc_user_fields_options');
         }
     }
 
+    // Admin page UI and validations.
     public function wc_user_fields_options(){
         ?>
 
